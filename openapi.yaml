@@ -1,0 +1,656 @@
+openapi: 3.0.1
+info:
+  title: httpstan
+  version: 4.10.0
+servers:
+- url: /
+paths:
+  /v1/health:
+    get:
+      description: Check if service is running.
+      responses:
+        "200":
+          content: {}
+          description: OK
+  /v1/models:
+    get:
+      description: List cached models.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_v1_models_get_200_response'
+          description: Identifier for compiled Stan model and compiler output.
+    post:
+      description: Compile a Stan model
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModelRequest'
+        description: Stan program code to compile
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+          description: Identifier for compiled Stan model and compiler output.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with compile request.
+      x-codegen-request-body-name: body
+  /v1/models/{model_id}:
+    delete:
+      description: Delete a model which has been saved in the cache.
+      parameters:
+      - description: ID of Stan model
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: Model successfully deleted.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Model not found.
+      summary: Delete a model and any associated fits.
+  /v1/models/{model_id}/params:
+    post:
+      description: "Returns the output of Stan C++ model class methods: ``constrained_param_names``,\
+        \ ``get_param_names`` and ``get_dims``."
+      parameters:
+      - description: ID of Stan model to use
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Data'
+        description: Data for Stan Model. Needed to calculate param names and dimensions.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_v1_models__model_id__params_post_200_response'
+          description: Parameters for Stan Model
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with request.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Model not found.
+      summary: Get parameter names and dimensions.
+      x-codegen-request-body-name: data
+  /v1/models/{model_id}/log_prob:
+    post:
+      description: Returns the output of Stan C++ ``log_prob`` model class method.
+      parameters:
+      - description: ID of Stan model to use
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: boolean
+        description: Boolean to control whether we apply a Jacobian adjust transform.
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_v1_models__model_id__log_prob_post_200_response'
+          description: Log probability of the unconstrained parameters.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with request.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Model not found.
+      summary: Return the log probability of the unconstrained parameters.
+      x-codegen-request-body-name: adjust_transform
+  /v1/models/{model_id}/log_prob_grad:
+    post:
+      description: Returns the output of Stan C++ `stan::model::log_prob_grad`.
+      parameters:
+      - description: ID of Stan model to use
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: boolean
+        description: Boolean to control whether we apply a Jacobian adjust transform.
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_v1_models__model_id__log_prob_grad_post_200_response'
+          description: Gradient of the log posterior evaluated at the unconstrained
+            parameters.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with request.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Model not found.
+      summary: Return the gradient of the log posterior evaluated at the unconstrained
+        parameters.
+      x-codegen-request-body-name: adjust_transform
+  /v1/models/{model_id}/write_array:
+    post:
+      description: Returns the output of Stan C++ ``write_array`` model class method.
+      parameters:
+      - description: ID of Stan model to use
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: boolean
+        description: Boolean to control whether we include generated quantities.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_v1_models__model_id__write_array_post_200_response'
+          description: "Sequence of constrained parameters, optionally including transformed\
+            \ parameters and generated quantities."
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with request.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Model not found.
+      summary: Return a sequence of constrained parameters.
+      x-codegen-request-body-name: include_gqs
+  /v1/models/{model_id}/transform_inits:
+    post:
+      description: Returns the output of Stan C++ ``transform_inits`` model class
+        method.
+      parameters:
+      - description: ID of Stan model to use
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Data'
+        description: Constrained parameter values and their specified context
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_v1_models__model_id__transform_inits_post_200_response'
+          description: Sequence of unconstrained parameters.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with request.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Model not found.
+      summary: Return a sequence of unconstrained parameters.
+      x-codegen-request-body-name: constrained_parameters
+  /v1/models/{model_id}/fits:
+    post:
+      description: |-
+        A request to this endpoint starts a long-running operation. Users can retrieve information about the status of the operation by making a GET request to the operations resource endpoint.
+        When the operation is `done`, the "fit" may be downloaded. (A "fit" collects all logger and writer messages from Stan.)
+        ``function`` indicates the name of the ``stan::services function`` which should be called given the Stan model associated with the id ``model_id``. For example, if sampling using ``stan::services::sample::hmc_nuts_diag_e_adapt`` then ``function`` is the full function name ``stan::services::sample::hmc_nuts_diag_e_adapt``.  Sampler parameters which are not supplied will be given default values taken from CmdStan.  For example, if ``stan::services::sample::hmc_nuts_diag_e_adapt`` is the function called and the parameter ``num_samples`` is not specified, the value 1000 will be used. For a full list of default values consult the CmdStan documentation.
+      parameters:
+      - description: ID of Stan model to use
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFitRequest'
+        description: Full stan::services function name and associated arguments to
+          call with Stan model.
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fit'
+          description: Identifier for completed Stan fit
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Error associated with request.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Fit not found.
+      summary: Call function defined in stan::services.
+      x-codegen-request-body-name: body
+  /v1/models/{model_id}/fits/{fit_id}:
+    delete:
+      description: Delete a fit which has been saved in the cache.
+      parameters:
+      - description: ID of Stan model associated with the fit.
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      - description: ID of fit to be deleted.
+        in: path
+        name: fit_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: Fit successfully deleted.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Fit not found.
+      summary: Delete a fit.
+    get:
+      description: "Result (draws, logger messages) from calling a function defined\
+        \ in stan::services."
+      parameters:
+      - description: ID of Stan model associated with the result
+        in: path
+        name: model_id
+        required: true
+        schema:
+          type: string
+      - description: ID of Stan result ("fit") desired
+        in: path
+        name: fit_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: Newline-delimited JSON-encoded messages from Stan. Includes
+            draws.
+        "404":
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Fit not found.
+      summary: Get results returned by a function.
+  /v1/operations/{operation_id}:
+    get:
+      description: Return Operation details. Details about an Operation include whether
+        or not the operation is `done` and information about the progress of sampling.
+      parameters:
+      - description: ID of Operation
+        in: path
+        name: operation_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Operation name and metadata.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+          description: Operation not found.
+      summary: Get Operation details.
+components:
+  schemas:
+    CreateFitRequest:
+      example:
+        random_seed: 0
+        init: "{}"
+        chain: 0
+        data: "{}"
+        max_depth: 0
+        stepsize_jitter: 1.0246457001441578
+        delta: 6.027456183070403
+        refresh: 0
+        term_buffer: 0
+        init_buffer: 0
+        init_radius: 5.637376656633329
+        function: stan::services::sample::hmc_nuts_diag_e_adapt
+        num_thin: 0
+        kappa: 2.3021358869347655
+        num_warmup: 0
+        window: 0
+        t0: 1.4894159098541704
+        save_warmup: true
+        gamma: 1.4658129805029452
+        stepsize: 1.2315135367772556
+        num_samples: 0
+      properties:
+        chain:
+          minimum: 0
+          type: integer
+        data:
+          allOf:
+          - $ref: '#/components/schemas/Data'
+          type: object
+        delta:
+          type: number
+        function:
+          enum:
+          - stan::services::sample::hmc_nuts_diag_e_adapt
+          - stan::services::sample::fixed_param
+          type: string
+        gamma:
+          type: number
+        init:
+          allOf:
+          - $ref: '#/components/schemas/Data'
+          type: object
+        init_buffer:
+          minimum: 0
+          type: integer
+        init_radius:
+          type: number
+        kappa:
+          type: number
+        max_depth:
+          minimum: 0
+          type: integer
+        num_samples:
+          minimum: 0
+          type: integer
+        num_thin:
+          minimum: 0
+          type: integer
+        num_warmup:
+          minimum: 0
+          type: integer
+        random_seed:
+          minimum: 0
+          type: integer
+        refresh:
+          minimum: 0
+          type: integer
+        save_warmup:
+          type: boolean
+        stepsize:
+          type: number
+        stepsize_jitter:
+          type: number
+        t0:
+          type: number
+        term_buffer:
+          minimum: 0
+          type: integer
+        window:
+          minimum: 0
+          type: integer
+      required:
+      - function
+      type: object
+    CreateModelRequest:
+      example:
+        program_code: program_code
+      properties:
+        program_code:
+          type: string
+      required:
+      - program_code
+      type: object
+    Data:
+      type: object
+    Fit:
+      example:
+        name: name
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
+    Model:
+      example:
+        stanc_warnings: stanc_warnings
+        compiler_output: compiler_output
+        name: name
+      properties:
+        compiler_output:
+          type: string
+        name:
+          type: string
+        stanc_warnings:
+          type: string
+      required:
+      - compiler_output
+      - name
+      - stanc_warnings
+      type: object
+    Operation:
+      example:
+        result: "{}"
+        metadata: "{}"
+        name: name
+        done: true
+      properties:
+        done:
+          type: boolean
+        metadata:
+          properties: {}
+          type: object
+        name:
+          type: string
+        result:
+          properties: {}
+          type: object
+      required:
+      - done
+      - name
+      type: object
+    Parameter:
+      example:
+        dims:
+        - 0
+        - 0
+        name: name
+        constrained_names:
+        - constrained_names
+        - constrained_names
+      properties:
+        constrained_names:
+          items:
+            type: string
+          type: array
+        dims:
+          items:
+            type: integer
+          type: array
+        name:
+          type: string
+      required:
+      - constrained_names
+      - dims
+      - name
+      type: object
+    Status:
+      properties:
+        code:
+          type: integer
+        details:
+          items:
+            properties: {}
+            type: object
+          type: array
+        message:
+          type: string
+        status:
+          type: string
+      required:
+      - code
+      - message
+      - status
+      type: object
+    _v1_models_get_200_response:
+      example:
+        models:
+        - stanc_warnings: stanc_warnings
+          compiler_output: compiler_output
+          name: name
+        - stanc_warnings: stanc_warnings
+          compiler_output: compiler_output
+          name: name
+      properties:
+        models:
+          items:
+            $ref: '#/components/schemas/Model'
+          type: array
+      type: object
+    _v1_models__model_id__params_post_200_response:
+      example:
+        id: id
+        params:
+        - dims:
+          - 0
+          - 0
+          name: name
+          constrained_names:
+          - constrained_names
+          - constrained_names
+        - dims:
+          - 0
+          - 0
+          name: name
+          constrained_names:
+          - constrained_names
+          - constrained_names
+      properties:
+        id:
+          type: string
+        params:
+          items:
+            $ref: '#/components/schemas/Parameter'
+          type: array
+      type: object
+    _v1_models__model_id__log_prob_post_200_response:
+      example:
+        log_prob: 0.8008281904610115
+      properties:
+        log_prob:
+          type: number
+      type: object
+    _v1_models__model_id__log_prob_grad_post_200_response:
+      example:
+        grad_log_prob:
+        - 0.8008281904610115
+        - 0.8008281904610115
+      properties:
+        grad_log_prob:
+          items:
+            type: number
+          type: array
+      type: object
+    _v1_models__model_id__write_array_post_200_response:
+      example:
+        params_r_constrained:
+        - 0.8008281904610115
+        - 0.8008281904610115
+      properties:
+        params_r_constrained:
+          items:
+            type: number
+          type: array
+      type: object
+    _v1_models__model_id__transform_inits_post_200_response:
+      example:
+        params_r_unconstrained:
+        - 0.8008281904610115
+        - 0.8008281904610115
+      properties:
+        params_r_unconstrained:
+          items:
+            type: number
+          type: array
+      type: object
+x-original-swagger-version: "2.0"
