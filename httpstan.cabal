@@ -1,5 +1,5 @@
 name:           httpstan
-version:        0.1.0.0
+version:        0.2.0.0
 synopsis:       Auto-generated httpstan API Client
 description:    .
                 Client library for calling the httpstan API based on http-client.
